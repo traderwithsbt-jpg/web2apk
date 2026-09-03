@@ -78,7 +78,7 @@ function setProgress(n, text) {
 }
 
 async function poll(id) {
-  const r = await fetch(API_BASE + "/status/ + encodeURIComponent(id));
+  const r = await fetch(API_BASE + "/status/" + encodeURIComponent(id));
   const j = await r.json();
   if (!r.ok) throw new Error(j.error || "Status error");
   setProgress(j.progress || 0, j.status === "complete" ? "APK ready!" : j.status === "error" ? "Build failed" : "Building your APK…");

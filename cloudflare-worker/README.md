@@ -1,33 +1,43 @@
-# Free GitHub Actions Gateway
+# Cloudflare Worker Gateway
 
-This folder is a tiny Cloudflare Worker API. It triggers the GitHub Actions workflow without exposing your GitHub token in Blogger.
+This Worker receives build requests from the Blogger frontend and triggers the GitHub Actions workflow.
 
-## 1. Create GitHub repository
-Upload the whole project to a **private or public** GitHub repository.
+## Cloudflare Workers Builds
 
-## 2. Add GitHub token
-Create a fine-grained GitHub token with access to this repository and permission to:
-- Actions: Read and write
-- Contents: Read and write
+Repository root: `/`
 
-Keep the token secret.
+Recommended deploy command:
 
-## 3. Create Cloudflare Worker
-Create a Worker in Cloudflare and paste `worker.js`.
+```text
+npx wrangler deploy
+```
 
-Add Worker environment variables:
-- `GITHUB_TOKEN` = your GitHub token
-- `GITHUB_REPO` = `YOUR_USERNAME/YOUR_REPOSITORY`
-- `GITHUB_REF` = `main`
+The root `wrangler.toml` points Wrangler to `cloudflare-worker/worker.js`.
 
-## 4. Connect Blogger
-Open `blogger/script.js` and set:
-const API_BASE = "https://YOUR-WORKER.workers.dev";
+Required Worker secrets/variables:
 
-Important: this is a gateway only. The GitHub token never goes into Blogger.
+- `GITHUB_TOKEN` — **Secret** (never a plain variable)
+- `GITHUB_REPO` — variable, for example `username/web2apk`
+- `GITHUB_REF` — variable, normally `main`
 
-## 5. Icon/splash
-For the first version, icon/splash URL fields are optional. A public HTTPS image URL can be sent to the gateway. Direct browser file upload is not included in this free gateway version because sending binary files through GitHub workflow inputs is not reliable.
+The Blogger frontend uses:
 
-## 6. Free-tier limits
-GitHub Actions has usage/retention limits. This setup is suitable for personal/testing use, not unlimited public APK generation.
+```text
+https://web2apk.traderwithsbt.workers.dev
+```
+
+Test:
+
+```text
+https://web2apk.traderwithsbt.workers.dev/health
+```
+
+Expected response:
+
+```json
+{"ok":true,"service":"Web2APK GitHub Actions Gateway"}
+```
+
+## Important
+
+Never paste the GitHub token into Blogger or public source code. If a token is exposed, revoke it and create a new one.

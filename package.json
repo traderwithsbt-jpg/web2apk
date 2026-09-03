@@ -1,0 +1,7 @@
+{
+  "name": "web2apk-cloudflare-worker",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^4.35.0"
+  }
+}
