@@ -1,20 +1,11 @@
-BLOGGER INSTALLATION
+WEB2APK INSTALL
 
-1. Deploy the backend folder to a Linux VPS/cloud server.
-2. Run:
-   npm install
-   npm start
-3. Put the backend's HTTPS URL in blogger/script.js:
-   const API_BASE = "https://YOUR-BACKEND-DOMAIN.example";
-4. In Blogger, create a page and use the HTML view.
-5. Paste the contents of blogger/index.html.
-6. For Blogger, either:
-   - paste style.css inside a <style>...</style> block and script.js inside a <script>...</script> block, OR
-   - host those two files on your own HTTPS static host and keep the <link>/<script src> references.
-7. Do not expect Blogger itself to compile APKs. The Node.js server does the build.
-
-SECURITY:
-- Do not expose Android signing keys in Blogger.
-- Add authentication/rate limiting before public launch.
-- Add build quotas and file cleanup.
-- Use HTTPS.
+1. Upload Web2APK-Blogger-Automatic-Theme-v2.xml in Blogger -> Theme -> Restore/Upload, or open Edit HTML and paste the XML.
+2. Cloudflare Worker API: https://web2apk.traderwithsbt.workers.dev
+3. In Cloudflare Worker settings configure:
+   - GITHUB_TOKEN = Secret (GitHub fine-grained token with Actions Read/Write and Contents Read/Write)
+   - GITHUB_REPO = traderwithsbt-ipg/web2apk
+   - GITHUB_REF = main
+4. The GitHub repository must contain .github/workflows/build-web2apk.yml and backend/.
+5. The Blogger page sends the selected icon/splash automatically to the Worker; the Worker commits them temporarily to the repo, the GitHub Action builds the APK, creates a Release, then cleans the temporary images.
+6. Do not put the GitHub token in Blogger HTML/JavaScript.

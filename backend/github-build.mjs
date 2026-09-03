@@ -73,11 +73,14 @@ async function main(){
   if(!isHttp(input.url)) throw new Error("Valid website URL required");
   const project=path.join(ROOT,input.jobId,"project");
   await fs.remove(project); await copyRecursive(TEMPLATE,project);
+  // Use PNG launcher assets on every Android version so a custom icon is never
+  // hidden by the template adaptive-icon resource.
+  await fs.remove(path.join(project,"app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"));
   const appName=safeAppName(input.appName),pkg=safePackage(input.packageName),pkgPath=path.join(...pkg.split("."));
   const srcRoot=path.join(project,"app/src/main/java"),oldJava=path.join(srcRoot,"com/example/web2apk/MainActivity.java"),newJavaDir=path.join(srcRoot,pkgPath);
   await fs.ensureDir(newJavaDir);
   let java=await fs.readFile(oldJava,"utf8"); await fs.remove(path.dirname(oldJava));
-  java=java.replaceAll("com.example.web2apk",pkg).replaceAll("WEB2APK_APP_NAME",javaEscape(appName))
+  java=java.replaceAll("com.example.web2apk",pkg).replaceAll("WEB2APK_APP_NAME",javaEscape(appName)).replaceAll("WEB2APK_WEBSITE_URL",javaEscape(input.url))
     .replaceAll("WEB2APK_ORIENTATION",input.orientation==="landscape"?"landscape":"portrait")
     .replaceAll("WEB2APK_SPLASH_MS",String(Math.max(0,Math.min(10000,Number(input.splashMs)||2000))))
     .replaceAll("WEB2APK_INTERNET_CHECK",String(input.internetCheck!=="false"))
@@ -89,11 +92,29 @@ async function main(){
   let manifest=await fs.readFile(mf,"utf8"); manifest=manifest.replaceAll("com.example.web2apk",pkg).replace("android:screenOrientation=\"portrait\"",`android:screenOrientation="${input.orientation==="landscape"?"landscape":"portrait"}"`);
   await fs.writeFile(mf,manifest);
   const gb=path.join(project,"app/build.gradle");
-  let gradle=await fs.readFile(gb,"utf8"); gradle=gradle.replace("applicationId \"com.example.web2apk\"",`applicationId "${pkg}"`).replace("versionName \"1.0\"",`versionName "${String(input.versionName||"1.0").replace(/"/g,"")}"`).replace("versionCode 1",`versionCode ${Math.max(1,parseInt(input.versionCode||"1",10))}`);
+  let gradle=await fs.readFile(gb,"utf8"); gradle=gradle.replace(/namespace "com\.example\.web2apk"/,`namespace "${pkg}"`).replace(/applicationId "com\.example\.web2apk"/,`applicationId "${pkg}"`).replace(/versionName "1\.0"/,`versionName "${String(input.versionName||"1.0").replace(/"/g,"")}"`).replace(/versionCode 1/,`versionCode ${Math.max(1,parseInt(input.versionCode||"1",10)||1)}`);
   await fs.writeFile(gb,gradle);
   await fs.writeFile(path.join(project,"app/src/main/res/values/strings.xml"),`<resources><string name="app_name">${xmlEscape(appName)}</string></resources>`);
-  if(input.iconUrl){const p=path.join(ROOT,input.jobId,"icon");await fs.ensureDir(path.dirname(p));await downloadFile(input.iconUrl,p);await makeIcon(p,path.join(project,"app/src/main/res"));}
-  if(input.splashUrl){const p=path.join(ROOT,input.jobId,"splash");await fs.ensureDir(path.dirname(p));await downloadFile(input.splashUrl,p);await makeSplash(p,path.join(project,"app/src/main/res"));}
-  await mirrorWebsite(input.url,path.join(project,"app/src/main/assets/www"));
+  // Prefer the image uploaded by Blogger through the Worker. Public HTTPS URLs
+  // remain supported as a fallback.
+  if(input.iconPath){
+    const p=path.resolve(process.cwd(),input.iconPath);
+    if(!p.startsWith(path.resolve(process.cwd()) + path.sep)) throw new Error("Invalid icon path");
+    if(await fs.pathExists(p)) await makeIcon(p,path.join(project,"app/src/main/res"));
+  } else if(input.iconUrl){
+    const p=path.join(ROOT,input.jobId,"icon"); await fs.ensureDir(path.dirname(p));
+    await downloadFile(input.iconUrl,p); await makeIcon(p,path.join(project,"app/src/main/res"));
+  }
+  if(input.splashPath){
+    const p=path.resolve(process.cwd(),input.splashPath);
+    if(!p.startsWith(path.resolve(process.cwd()) + path.sep)) throw new Error("Invalid splash path");
+    if(await fs.pathExists(p)) await makeSplash(p,path.join(project,"app/src/main/res"));
+  } else if(input.splashUrl){
+    const p=path.join(ROOT,input.jobId,"splash"); await fs.ensureDir(path.dirname(p));
+    await downloadFile(input.splashUrl,p); await makeSplash(p,path.join(project,"app/src/main/res"));
+  }
+  // The packaged app loads the live website URL. This is much more reliable for
+  // modern sites than copying only a subset of their assets into the APK.
+
 }
 main().catch(e=>{console.error(e);process.exit(1)});
