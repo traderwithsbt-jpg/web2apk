@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web2APK — Website to Android APK</title>
+<meta name="description" content="Convert your website into an Android APK.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#"><span class="brand-icon">⚡</span><span>Web2APK</span></a>
+  <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">☾</button>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div class="badge">⚡ FAST • SIMPLE • MOBILE READY</div>
+    <h1>Convert your <span>website</span><br>into an Android APK</h1>
+    <p>Enter your website URL, customize your app and build an APK automatically.</p>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><h2>1. Website</h2><p>Your website must be publicly accessible.</p></div><span class="step">01</span></div>
+    <label>Website URL</label>
+    <div class="url-row"><span>🌐</span><input id="url" type="url" placeholder="https://example.com" autocomplete="url"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><h2>2. App settings</h2><p>Choose how your Android app should look.</p></div><span class="step">02</span></div>
+    <div class="grid">
+      <div><label>App name</label><input id="appName" placeholder="My Website App" maxlength="40"></div>
+      <div><label>Package name</label><input id="packageName" placeholder="com.example.myapp"></div>
+      <div><label>Version name</label><input id="versionName" value="1.0"></div>
+      <div><label>Version code</label><input id="versionCode" value="1"></div>
+    </div>
+
+    <div class="upload-grid">
+      <label class="upload-box"><span class="upload-icon">🖼️</span><strong>App icon</strong><small>PNG/JPG • max 10 MB</small><input id="icon" type="file" accept="image/png,image/jpeg,image/webp"><img id="iconPreview"></label>
+      <label class="upload-box"><span class="upload-icon">✨</span><strong>Splash logo</strong><small>PNG/JPG • max 10 MB</small><input id="splash" type="file" accept="image/png,image/jpeg,image/webp"><img id="splashPreview"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><h2>3. Android features</h2><p>Recommended defaults are already enabled.</p></div><span class="step">03</span></div>
+    <div class="settings">
+      <div class="setting"><div><b>Portrait screen</b><small>Lock app to portrait orientation</small></div><select id="orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
+      <div class="setting"><div><b>Back & Exit</b><small>Use web history, then show exit confirmation</small></div><input id="exitConfirm" type="checkbox" checked></div>
+      <div class="setting"><div><b>Internet check</b><small>Show offline screen when connection is unavailable</small></div><input id="internetCheck" type="checkbox" checked></div>
+      <div class="setting"><div><b>File upload</b><small>Allow HTML file inputs to open Android picker</small></div><input id="fileUpload" type="checkbox" checked></div>
+      <div class="setting"><div><b>File download</b><small>Enable download links from the website</small></div><input id="fileDownload" type="checkbox" checked></div>
+      <div class="setting"><div><b>Splash duration</b><small>Loading screen duration</small></div><select id="splashMs"><option value="2000">2 seconds</option><option value="3000">3 seconds</option><option value="5000">5 seconds</option></select></div>
+    </div>
+  </section>
+
+  <section class="build-card">
+    <div class="build-title"><div><span class="live-dot"></span><b>Ready to build</b><p>We will prepare the Android project and generate your APK.</p></div><span>APK</span></div>
+    <button id="buildBtn" class="build-btn">🚀 Build APK</button>
+    <div id="progressWrap" class="progress-wrap hidden">
+      <div class="progress-label"><span id="statusText">Starting…</span><span id="percent">0%</span></div>
+      <div class="progress"><i id="bar"></i></div>
+      <pre id="logs"></pre>
+    </div>
+    <div id="result" class="result hidden"></div>
+  </section>
+
+  <p class="note">Tip: For the best result, use a responsive website that does not require a login or browser-only extensions.</p>
+</main>
+<footer>© 2026 Web2APK • Self-hosted APK builder</footer>
+<script src="script.js"></script>
+</body>
+</html>

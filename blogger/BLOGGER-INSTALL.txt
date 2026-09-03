@@ -1,0 +1,20 @@
+BLOGGER INSTALLATION
+
+1. Deploy the backend folder to a Linux VPS/cloud server.
+2. Run:
+   npm install
+   npm start
+3. Put the backend's HTTPS URL in blogger/script.js:
+   const API_BASE = "https://YOUR-BACKEND-DOMAIN.example";
+4. In Blogger, create a page and use the HTML view.
+5. Paste the contents of blogger/index.html.
+6. For Blogger, either:
+   - paste style.css inside a <style>...</style> block and script.js inside a <script>...</script> block, OR
+   - host those two files on your own HTTPS static host and keep the <link>/<script src> references.
+7. Do not expect Blogger itself to compile APKs. The Node.js server does the build.
+
+SECURITY:
+- Do not expose Android signing keys in Blogger.
+- Add authentication/rate limiting before public launch.
+- Add build quotas and file cleanup.
+- Use HTTPS.
