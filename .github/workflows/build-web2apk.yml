@@ -110,9 +110,9 @@ jobs:
           gradle-version: "8.9"
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: backend/package.json
 
@@ -151,8 +151,13 @@ jobs:
           }));
           NODE
 
-      - name: Build APK
+      - name: Prepare Android project
         run: node backend/github-build.mjs build-input.json
+
+      - name: Build APK
+        run: |
+          cd "backend/work/${{ inputs.job_id }}/project"
+          gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Rename APK
         run: |
