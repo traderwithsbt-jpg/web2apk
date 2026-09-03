@@ -1,5 +1,5 @@
 // Change this to your deployed Node.js backend URL.
-const API_BASE = "https://YOUR-WORKER.workers.dev";
+const API_BASE = "https://web2apk.traderwithsbt.workers.dev";
 
 const $ = id => document.getElementById(id);
 const iconInput = $("icon"), splashInput = $("splash");
