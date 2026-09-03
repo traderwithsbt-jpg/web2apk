@@ -5,74 +5,90 @@ run-name: Web2APK ${{ inputs.job_id }}
 on:
   workflow_dispatch:
     inputs:
+
       job_id:
         description: "Unique build ID"
         required: true
         type: string
+
       website_url:
         description: "Website URL"
         required: true
         type: string
+
       app_name:
         description: "App name"
         required: true
         type: string
+
       package_name:
         description: "Package name"
         required: true
         type: string
+
       version_name:
         description: "Version name"
         required: true
         default: "1.0"
         type: string
+
       version_code:
         description: "Version code"
         required: true
         default: "1"
         type: string
+
       orientation:
         description: "portrait or landscape"
         required: true
         default: "portrait"
         type: string
+
       splash_ms:
         description: "Splash duration"
         required: true
         default: "2000"
         type: string
+
       exit_confirm:
         description: "Exit confirmation"
         required: true
         default: "true"
         type: string
+
       internet_check:
         description: "Internet check"
         required: true
         default: "true"
         type: string
+
       file_upload:
         description: "File upload"
         required: true
         default: "true"
         type: string
+
       file_download:
         description: "File download"
         required: true
         default: "true"
         type: string
+
       icon_url:
         description: "Optional icon URL"
         required: false
         type: string
+
       splash_url:
         description: "Optional splash URL"
         required: false
         type: string
+
       icon_path:
         description: "Uploaded icon path"
         required: false
         type: string
+
       splash_path:
         description: "Uploaded splash path"
         required: false
@@ -82,11 +98,15 @@ permissions:
   contents: write
 
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
+
     timeout-minutes: 15
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -122,67 +142,108 @@ jobs:
 
       - name: Prepare build config
         env:
+
           JOB_ID: ${{ inputs.job_id }}
+
           WEBSITE_URL: ${{ inputs.website_url }}
+
           APP_NAME: ${{ inputs.app_name }}
+
           PACKAGE_NAME: ${{ inputs.package_name }}
+
           VERSION_NAME: ${{ inputs.version_name }}
+
           VERSION_CODE: ${{ inputs.version_code }}
+
           ORIENTATION: ${{ inputs.orientation }}
+
           SPLASH_MS: ${{ inputs.splash_ms }}
+
           EXIT_CONFIRM: ${{ inputs.exit_confirm }}
+
           INTERNET_CHECK: ${{ inputs.internet_check }}
+
           FILE_UPLOAD: ${{ inputs.file_upload }}
+
           FILE_DOWNLOAD: ${{ inputs.file_download }}
+
           ICON_URL: ${{ inputs.icon_url }}
+
           SPLASH_URL: ${{ inputs.splash_url }}
+
           ICON_PATH: ${{ inputs.icon_path }}
+
           SPLASH_PATH: ${{ inputs.splash_path }}
+
         run: |
+
           node - <<'NODE'
+
           const fs = require('fs');
+
           const e = process.env;
-          fs.writeFileSync('build-input.json', JSON.stringify({
-            jobId:e.JOB_ID, url:e.WEBSITE_URL, appName:e.APP_NAME,
-            packageName:e.PACKAGE_NAME, versionName:e.VERSION_NAME, versionCode:e.VERSION_CODE,
-            orientation:e.ORIENTATION, splashMs:e.SPLASH_MS, exitConfirm:e.EXIT_CONFIRM,
-            internetCheck:e.INTERNET_CHECK, fileUpload:e.FILE_UPLOAD, fileDownload:e.FILE_DOWNLOAD,
-            iconUrl:e.ICON_URL, splashUrl:e.SPLASH_URL, iconPath:e.ICON_PATH, splashPath:e.SPLASH_PATH
-          }));
+
+          fs.writeFileSync(
+            'build-input.json',
+            JSON.stringify({
+              jobId: e.JOB_ID,
+              url: e.WEBSITE_URL,
+              appName: e.APP_NAME,
+              packageName: e.PACKAGE_NAME,
+              versionName: e.VERSION_NAME,
+              versionCode: e.VERSION_CODE,
+              orientation: e.ORIENTATION,
+              splashMs: e.SPLASH_MS,
+              exitConfirm: e.EXIT_CONFIRM,
+              internetCheck: e.INTERNET_CHECK,
+              fileUpload: e.FILE_UPLOAD,
+              fileDownload: e.FILE_DOWNLOAD,
+              iconUrl: e.ICON_URL,
+              splashUrl: e.SPLASH_URL,
+              iconPath: e.ICON_PATH,
+              splashPath: e.SPLASH_PATH
+            })
+          );
+
           NODE
 
       - name: Prepare Android project
-        run: node backend/github-build.mjs build-input.json
+        run: |
+          node backend/github-build.mjs build-input.json
 
       - name: Build APK
         run: |
+
           cd "backend/work/${{ inputs.job_id }}/project"
-          gradle :app:assembleDebug --no-daemon --stacktrace
+
+          gradle :app:assembleDebug \
+            --no-daemon \
+            --stacktrace
 
       - name: Rename APK
         run: |
+
           mkdir -p release
-          APK=$(find backend/work -type f -name "app-debug.apk" | head -n 1)
+
+          APK=$(find backend/work \
+            -type f \
+            -name "app-debug.apk" \
+            | head -n 1)
+
           test -n "$APK"
-          cp "$APK" "release/Web2APK-${{ inputs.job_id }}.apk"
+
+          cp "$APK" \
+            "release/Web2APK-${{ inputs.job_id }}.apk"
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+
         run: |
+
           TAG="web2apk-${{ inputs.job_id }}"
-          gh release create "$TAG" "release/Web2APK-${{ inputs.job_id }}.apk" \
+
+          gh release create "$TAG" \
+            "release/Web2APK-${{ inputs.job_id }}.apk" \
             --title "Web2APK ${{ inputs.job_id }}" \
             --notes "Generated Web2APK APK."
-
-      - name: Clean uploaded assets
-        if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -r --ignore-unmatch "web2apk-assets/${{ inputs.job_id }}" || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Cleanup Web2APK assets ${{ inputs.job_id }}"
-            git pull --rebase origin "${GITHUB_REF_NAME:-main}" || true
-            git push origin "${GITHUB_REF_NAME:-main}" || true
-          fi
