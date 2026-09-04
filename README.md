@@ -26,3 +26,7 @@ Replace the repository workflow and backend/template files with this package, co
 
 ## Important
 The uploaded website is still loaded live in the WebView. The new splash is native Android, not a website overlay.
+
+
+### GitHub workflow input-limit fix
+The Worker sends the many app settings inside one `config` JSON input. The GitHub workflow dispatch now uses only 6 inputs, avoiding the GitHub API 25-property limit.

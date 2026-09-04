@@ -118,14 +118,12 @@ async function createBuild(request, env) {
   if (iconFile) iconPath = await uploadFileToRepo(env, `${assetDir}/icon.png`, iconFile);
   if (splashFile) splashPath = await uploadFileToRepo(env, `${assetDir}/splash.png`, splashFile);
 
-  const inputs = {
-    job_id: jobId,
-    website_url: b.url,
-    app_name: b.appName || "My Website App",
-    package_name: b.packageName || "com.web2apk.app",
-    version_name: b.versionName || "1.0",
+  // GitHub workflow_dispatch accepts at most 25 input properties. Keep the
+  // dispatch itself small and put the remaining app settings into one JSON
+  // config input. This prevents the "No more than 25 properties" API error.
+  const config = {
     version_code: String(b.versionCode || 1),
-    orientation: ["portrait","landscape","sensor"].includes(b.orientation) ? b.orientation : "portrait",
+    orientation: b.orientation || "portrait",
     splash_enabled: String(b.splashEnabled !== false && b.splashEnabled !== "false"),
     splash_ms: String(b.splashMs || 2000),
     splash_bg_type: b.splashBgType === "gradient" ? "gradient" : "solid",
@@ -133,9 +131,9 @@ async function createBuild(request, env) {
     splash_bg2: b.splashBg2 || "#242B55",
     splash_text: b.splashText || "#FFFFFF",
     splash_accent: b.splashAccent || "#7C72FF",
-    splash_align: ["center","top","bottom"].includes(b.splashAlign) ? b.splashAlign : "center",
-    splash_loading: ["bar","spinner","dots","none"].includes(b.splashLoading) ? b.splashLoading : "bar",
-    splash_animation: ["fade","zoom","slideup","none"].includes(b.splashAnimation) ? b.splashAnimation : "fade",
+    splash_align: b.splashAlign || "center",
+    splash_loading: b.splashLoading || "bar",
+    splash_animation: b.splashAnimation || "fade",
     splash_title: b.splashTitle || b.appName || "My Website App",
     splash_tagline: b.splashTagline || "",
     splash_show_logo: String(b.splashShowLogo !== false && b.splashShowLogo !== "false"),
@@ -159,6 +157,15 @@ async function createBuild(request, env) {
     splash_url: b.splashUrl || "",
     icon_path: iconPath,
     splash_path: splashPath
+  };
+
+  const inputs = {
+    job_id: jobId,
+    website_url: b.url,
+    app_name: b.appName || "My Website App",
+    package_name: b.packageName || "com.web2apk.app",
+    version_name: b.versionName || "1.0",
+    config: JSON.stringify(config)
   };
 
   await gh(`/repos/${env.GITHUB_REPO}/actions/workflows/build-web2apk.yml/dispatches`, env, {

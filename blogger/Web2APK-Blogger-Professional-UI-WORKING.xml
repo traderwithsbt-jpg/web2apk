@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<html b:version='2' class='v2' expr:dir='data:blog.languageDirection'
+      xmlns='http://www.w3.org/1999/xhtml'
+      xmlns:b='http://www.google.com/2005/gml/b'
+      xmlns:data='http://www.google.com/2005/gml/data'
+      xmlns:expr='http://www.google.com/2005/gml/expr'>
+<head>
+<meta charset='UTF-8'/>
+<meta content='width=device-width, initial-scale=1' name='viewport'/>
+<title>Web2APK — Website to Android APK</title>
+<b:include data='blog' name='all-head-content'/>
+<b:skin><![CDATA[
+:root{--bg:#f5f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--primary:#6257e8;--soft:#efedff;--shadow:0 16px 45px rgba(30,35,70,.08)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:radial-gradient(circle at 50% -10%,#e9e7ff,transparent 38%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.dark{--bg:#080c16;--card:#111722;--text:#f4f6fb;--muted:#9aa4b8;--line:#273043;--soft:#1a2140;background:radial-gradient(circle at 50% -10%,#20244d,transparent 40%),var(--bg)}
+button,input,select{font:inherit}
+.topbar{position:sticky;top:0;z-index:20;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 max(18px,calc((100% - 1050px)/2));background:rgba(255,255,255,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+body.dark .topbar{background:rgba(8,12,22,.82)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px}
+.brand-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#6257e8,#9a5be8);color:#fff}
+.icon-btn{width:42px;height:42px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font-size:18px;cursor:pointer}
+.container{max-width:900px;margin:auto;padding:48px 18px 80px}
+.hero{text-align:center;padding:10px 0 34px}
+.badge{display:inline-block;padding:8px 13px;border-radius:999px;background:var(--soft);color:var(--primary);font-size:11px;font-weight:900;letter-spacing:.8px}
+.hero h1{font-size:clamp(34px,7vw,58px);line-height:1.05;letter-spacing:-2px;margin:18px 0 14px}
+.hero h1 span{background:linear-gradient(90deg,#6257e8,#a24fe4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:700px;margin:auto;color:var(--muted);font-size:16px;line-height:1.7}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;margin:16px 0;box-shadow:var(--shadow)}
+.build-card{background:linear-gradient(135deg,#161d35,#242b4b);color:#fff;border:0}
+.section-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:20px}
+.section-head h2{margin:0 0 5px;font-size:20px}
+.section-head p{margin:0;color:var(--muted);font-size:13px}
+.build-card .section-head p{color:#b9c1d4}
+.section-head>b{font-size:12px;padding:7px 10px;border-radius:9px;background:var(--soft);color:var(--primary)}
+.build-card .section-head>b{background:#303a62;color:#fff}
+label{display:block;font-size:12px;font-weight:800;margin-bottom:7px}
+input[type=url],input[type=text],input[type=number],select{width:100%;border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--card);color:var(--text);outline:0}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(98,87,232,.12)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:13px}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:13px;min-height:48px}
+.setting span{font-size:13px;font-weight:700}
+.setting select{width:150px;padding:9px}
+.setting input[type=color]{width:46px;height:34px;padding:2px;border:1px solid var(--line);border-radius:9px;background:transparent}
+.setting input[type=checkbox]{width:20px;height:20px;accent-color:var(--primary)}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:16px}
+.upload{border:1.5px dashed var(--line);border-radius:15px;padding:18px;text-align:center;cursor:pointer}
+.upload strong{display:block;font-size:14px}
+.upload small{display:block;color:var(--muted);margin:6px 0 10px}
+.upload input{width:100%}
+.preview{width:100px;height:100px;object-fit:cover;border-radius:16px;display:none;margin:12px auto 0;border:1px solid var(--line)}
+.preview.show{display:block}
+.build-btn{width:100%;border:0;border-radius:14px;padding:16px;background:linear-gradient(90deg,#7066ff,#a15bea);color:#fff;font-weight:900;font-size:16px;cursor:pointer}
+.build-btn:disabled{opacity:.6;cursor:not-allowed}
+.progress-label{display:flex;justify-content:space-between;margin:18px 0 8px;font-size:12px}
+.progress{height:9px;border-radius:20px;background:#39425f;overflow:hidden}
+.progress i{display:block;width:0;height:100%;background:#a99dff;transition:width .3s}
+.logs{white-space:pre-wrap;max-height:150px;overflow:auto;color:#c8d0e2;font-size:11px}
+.result{margin-top:16px;padding:15px;border-radius:14px;background:#202a47}
+.result a{display:inline-block;margin-top:10px;padding:11px 15px;border-radius:10px;background:#19a463;color:#fff;text-decoration:none;font-weight:900}
+.hidden{display:none}
+footer{text-align:center;color:var(--muted);padding:25px;font-size:12px}
+.notice{padding:12px 14px;border-radius:12px;background:var(--soft);color:var(--primary);font-size:13px;margin-bottom:16px}
+.error-box{margin-top:12px;padding:12px;border-radius:12px;background:#4a1f2a;color:#ffd6df;font-size:13px;display:none}
+@media(max-width:650px){.grid,.upload-grid{grid-template-columns:1fr}.container{padding-top:28px}.card{padding:18px;border-radius:18px}.setting{align-items:flex-start}.setting select{width:135px}.hero h1{letter-spacing:-1.2px}}
+]]></b:skin>
+</head>
+
+<body>
+<header class='topbar'>
+  <div class='brand'><span class='brand-icon'>⚡</span><span>Web2APK</span></div>
+  <button aria-label='Toggle dark mode' class='icon-btn' id='themeBtn' type='button'>☾</button>
+</header>
+
+<main class='container'>
+<section class='hero'>
+  <span class='badge'>FAST • CUSTOM • ANDROID</span>
+  <h1>Turn your <span>website</span> into an Android app</h1>
+  <p>Customize splash screen, navigation, WebView behavior and Android features — then build the APK automatically.</p>
+</section>
+
+<section class='card'>
+<div class='section-head'><div><h2>🌐 Website</h2><p>Use a public HTTP/HTTPS website.</p></div><b>01</b></div>
+<label>Website URL</label>
+<input autocomplete='url' id='url' placeholder='https://example.com' type='url'/>
+</section>
+
+<section class='card'>
+<div class='section-head'><div><h2>📱 App information</h2><p>Name, package and version.</p></div><b>02</b></div>
+<div class='grid'>
+<div><label>App name</label><input id='appName' maxlength='40' placeholder='My Website App' type='text'/></div>
+<div><label>Package name</label><input id='packageName' placeholder='com.web2apk.myapp' type='text'/></div>
+<div><label>Version name</label><input id='versionName' value='1.0' type='text'/></div>
+<div><label>Version code</label><input id='versionCode' inputmode='numeric' value='1' type='number'/></div>
+</div>
+<div class='upload-grid'>
+<label class='upload'>
+<strong>🖼️ App icon</strong><small>PNG / JPG / WebP • max 10 MB</small>
+<input id='icon' accept='image/png,image/jpeg,image/webp' type='file'/>
+<img alt='App icon preview' class='preview' id='iconPreview'/>
+</label>
+<label class='upload'>
+<strong>✨ Splash logo</strong><small>PNG / JPG / WebP • max 10 MB</small>
+<input id='splash' accept='image/png,image/jpeg,image/webp' type='file'/>
+<img alt='Splash logo preview' class='preview' id='splashPreview'/>
+</label>
+</div>
+</section>
+
+<section class='card'>
+<div class='section-head'><div><h2>✨ Custom splash screen</h2><p>Choose exactly how the native Android splash should look.</p></div><b>03</b></div>
+<div class='grid'>
+<div class='setting'><span>Enable splash screen</span><input checked='checked' id='splashEnabled' type='checkbox'/></div>
+<div class='setting'><span>Show logo</span><input checked='checked' id='splashShowLogo' type='checkbox'/></div>
+<div class='setting'><span>Show app name</span><input checked='checked' id='splashShowTitle' type='checkbox'/></div>
+<div class='setting'><span>Show tagline</span><input id='splashShowTagline' type='checkbox'/></div>
+<div class='setting'><span>Show loading</span><input checked='checked' id='splashShowLoading' type='checkbox'/></div>
+<div class='setting'><span>Background</span><select id='splashBgType'><option value='solid'>Solid color</option><option value='gradient'>Gradient</option></select></div>
+<div class='setting'><span>Background color</span><input id='splashBg' type='color' value='#0B1020'/></div>
+<div class='setting'><span>Second gradient color</span><input id='splashBg2' type='color' value='#242B55'/></div>
+<div class='setting'><span>Text color</span><input id='splashText' type='color' value='#FFFFFF'/></div>
+<div class='setting'><span>Accent / loading color</span><input id='splashAccent' type='color' value='#7C72FF'/></div>
+<div class='setting'><span>Logo / title position</span><select id='splashAlign'><option value='center'>Center</option><option value='top'>Top</option><option value='bottom'>Bottom</option></select></div>
+<div class='setting'><span>Loading style</span><select id='splashLoading'><option value='bar'>Progress bar</option><option value='spinner'>Spinner</option><option value='dots'>Dots</option><option value='none'>None</option></select></div>
+<div class='setting'><span>Entry animation</span><select id='splashAnimation'><option value='fade'>Fade</option><option value='zoom'>Zoom</option><option value='slideup'>Slide up</option><option value='none'>None</option></select></div>
+<div class='setting'><span>Duration</span><select id='splashMs'><option value='1000'>1 second</option><option selected='selected' value='2000'>2 seconds</option><option value='3000'>3 seconds</option><option value='5000'>5 seconds</option><option value='8000'>8 seconds</option></select></div>
+</div>
+<div class='grid'>
+<div><label>Splash title</label><input id='splashTitle' placeholder='My Website App' type='text'/></div>
+<div><label>Tagline</label><input id='splashTagline' placeholder='Fast • Simple • Secure' type='text'/></div>
+</div>
+</section>
+
+<section class='card'>
+<div class='section-head'><div><h2>🤖 Android &amp; WebView features</h2><p>Everything is optional; choose what your APK needs.</p></div><b>04</b></div>
+<div class='grid'>
+<div class='setting'><span>Screen orientation</span><select id='orientation'><option value='portrait'>Portrait</option><option value='landscape'>Landscape</option><option value='sensor'>Auto rotate</option></select></div>
+<div class='setting'><span>Back navigation</span><input checked='checked' id='backNavigation' type='checkbox'/></div>
+<div class='setting'><span>Exit confirmation</span><input checked='checked' id='exitConfirm' type='checkbox'/></div>
+<div class='setting'><span>Internet check + offline page</span><input checked='checked' id='internetCheck' type='checkbox'/></div>
+<div class='setting'><span>File upload</span><input checked='checked' id='fileUpload' type='checkbox'/></div>
+<div class='setting'><span>File download</span><input checked='checked' id='fileDownload' type='checkbox'/></div>
+<div class='setting'><span>Pull to refresh</span><input id='pullToRefresh' type='checkbox'/></div>
+<div class='setting'><span>Open phone/email/WhatsApp links externally</span><input checked='checked' id='externalLinks' type='checkbox'/></div>
+<div class='setting'><span>Allow WebView zoom</span><input id='zoomEnabled' type='checkbox'/></div>
+<div class='setting'><span>Keep screen awake</span><input id='keepScreenOn' type='checkbox'/></div>
+<div class='setting'><span>Prevent screenshots</span><input id='preventScreenshots' type='checkbox'/></div>
+<div class='setting'><span>Camera access</span><input id='cameraPermission' type='checkbox'/></div>
+<div class='setting'><span>Microphone access</span><input id='microphonePermission' type='checkbox'/></div>
+<div class='setting'><span>Location access</span><input id='locationPermission' type='checkbox'/></div>
+</div>
+</section>
+
+<section class='card build-card'>
+<div class='section-head'><div><h2>🚀 Build APK</h2><p>Your selected settings are sent to GitHub Actions.</p></div><b>APK</b></div>
+<div class='notice'>Build button directly Cloudflare Worker ko request bhejta hai, aur Worker GitHub Actions me APK build start karta hai.</div>
+<button class='build-btn' id='buildBtn' type='button'>Build Android APK</button>
+<div class='hidden' id='progressWrap'>
+<div class='progress-label'><span id='statusText'>Starting...</span><span id='percent'>0%</span></div>
+<div class='progress'><i id='bar'></i></div>
+<pre class='logs' id='logs'></pre>
+</div>
+<div class='result hidden' id='result'></div>
+<div class='error-box' id='errorBox'></div>
+</section>
+</main>
+<footer>© 2026 Web2APK • Website to Android APK</footer>
+
+<b:section id='hiddenWidgets' showaddelement='no'/>
+
+<script type='text/javascript'><![CDATA[
+(function(){
+"use strict";
+
+var API="https://web2apk.traderwithsbt.workers.dev";
+function $(id){return document.getElementById(id);}
+
+function setProgress(n,text){
+  n=Math.max(0,Math.min(100,n));
+  $("bar").style.width=n+"%";
+  $("percent").textContent=n+"%";
+  $("statusText").textContent=text;
+}
+
+function showError(message){
+  $("buildBtn").disabled=false;
+  $("progressWrap").classList.remove("hidden");
+  $("errorBox").style.display="block";
+  $("errorBox").textContent=message||"Something went wrong.";
+  setProgress(0,"Build failed");
+}
+
+function preview(input,img){
+  if(!input||!img)return;
+  input.addEventListener("change",function(){
+    var file=input.files&&input.files[0];
+    if(!file){img.removeAttribute("src");img.classList.remove("show");return;}
+    if(!/^image\/(png|jpeg|webp)$/i.test(file.type)){
+      alert("Please select PNG, JPG or WebP image.");
+      input.value="";
+      img.removeAttribute("src");
+      img.classList.remove("show");
+      return;
+    }
+    if(file.size>10*1024*1024){
+      alert("Image must be 10 MB or smaller.");
+      input.value="";
+      img.removeAttribute("src");
+      img.classList.remove("show");
+      return;
+    }
+    if(img.dataset.url)URL.revokeObjectURL(img.dataset.url);
+    var objectUrl=URL.createObjectURL(file);
+    img.dataset.url=objectUrl;
+    img.src=objectUrl;
+    img.classList.add("show");
+  });
+}
+
+preview($("icon"),$("iconPreview"));
+preview($("splash"),$("splashPreview"));
+
+$("themeBtn").onclick=function(){
+  document.body.classList.toggle("dark");
+  $("themeBtn").textContent=document.body.classList.contains("dark")?"☀":"☾";
+};
+
+function packageFromName(name){
+  var v=String(name||"app").toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,18);
+  if(!v||!/^[a-z]/.test(v))v="app";
+  return "com.web2apk."+v;
+}
+
+$("appName").addEventListener("input",function(e){
+  if(!$("packageName").dataset.edited)$("packageName").value=packageFromName(e.target.value);
+  if(!$("splashTitle").value)$("splashTitle").value=e.target.value;
+});
+$("packageName").addEventListener("input",function(){$("packageName").dataset.edited="1";});
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c];
+  });
+}
+
+function imageBlob(file,kind){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    reader.onerror=function(){reject(new Error("Could not read image."));};
+    reader.onload=function(){
+      var image=new Image();
+      image.onerror=function(){reject(new Error("Could not decode image."));};
+      image.onload=function(){
+        var maxW=kind==="icon"?512:1080;
+        var maxH=kind==="icon"?512:1920;
+        var w=image.naturalWidth||image.width;
+        var h=image.naturalHeight||image.height;
+        if(kind==="icon"){
+          var side=Math.min(w,h);
+          var sx=(w-side)/2,sy=(h-side)/2;
+          var scale=Math.min(1,maxW/side);
+          var canvas=document.createElement("canvas");
+          canvas.width=canvas.height=Math.max(1,Math.round(side*scale));
+          var ctx=canvas.getContext("2d");
+          ctx.drawImage(image,sx,sy,side,side,0,0,canvas.width,canvas.height);
+          canvas.toBlob(function(blob){
+            if(blob)resolve(blob);else reject(new Error("Icon compression failed."));
+          },"image/png");
+        }else{
+          var scale2=Math.min(1,maxW/w,maxH/h);
+          var canvas2=document.createElement("canvas");
+          canvas2.width=Math.max(1,Math.round(w*scale2));
+          canvas2.height=Math.max(1,Math.round(h*scale2));
+          var ctx2=canvas2.getContext("2d");
+          ctx2.drawImage(image,0,0,canvas2.width,canvas2.height);
+          canvas2.toBlob(function(blob){
+            if(blob)resolve(blob);else reject(new Error("Splash compression failed."));
+          },"image/png");
+        }
+      };
+      image.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function getJson(response){
+  var data=await response.json().catch(function(){return {};});
+  if(!response.ok)throw new Error(data.error||("Server error "+response.status));
+  return data;
+}
+
+async function poll(jobId){
+  for(var i=0;i<180;i++){
+    await new Promise(function(resolve){setTimeout(resolve,3000);});
+    var response=await fetch(API+"/status/"+encodeURIComponent(jobId),{cache:"no-store"});
+    var data=await getJson(response);
+    setProgress(data.progress||10,data.status==="complete"?"APK ready!":data.status==="queued"?"Waiting for GitHub Actions...":"Building your APK...");
+    $("logs").textContent=(data.logs||[]).join("\n");
+
+    if(data.status==="complete"){
+      $("result").classList.remove("hidden");
+      $("result").innerHTML="<b>✅ APK generated successfully</b><br/>Your customized Android app is ready.<br/><a target='_blank' rel='noopener' href='"+esc(data.downloadUrl)+"'>Download APK</a>";
+      $("buildBtn").disabled=false;
+      return;
+    }
+
+    if(data.status==="error"){
+      $("buildBtn").disabled=false;
+      $("result").classList.remove("hidden");
+      $("result").innerHTML="<b>❌ Build failed</b><br/>"+esc(data.error||"Unknown build error");
+      return;
+    }
+  }
+  throw new Error("Build is taking longer than expected. GitHub Actions may still be running.");
+}
+
+$("buildBtn").onclick=async function(){
+  $("errorBox").style.display="none";
+  $("result").classList.add("hidden");
+
+  var url=$("url").value.trim();
+  var name=$("appName").value.trim()||"My Website App";
+  var pkg=$("packageName").value.trim()||packageFromName(name);
+
+  if(!/^https?:\/\/.+/i.test(url)){
+    alert("Please enter a valid http/https website URL.");
+    return;
+  }
+  if(!/^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z0-9_]+)+$/.test(pkg)){
+    alert("Package name example: com.web2apk.myapp");
+    return;
+  }
+
+  $("buildBtn").disabled=true;
+  $("progressWrap").classList.remove("hidden");
+  $("logs").textContent="";
+  setProgress(2,"Preparing your APK settings...");
+
+  try{
+    var fd=new FormData();
+    function add(key,value){fd.append(key,String(value));}
+
+    add("url",url);
+    add("appName",name);
+    add("packageName",pkg);
+    add("versionName",$("versionName").value.trim()||"1.0");
+    add("versionCode",$("versionCode").value.trim()||"1");
+
+    [
+      "orientation","splashBgType","splashBg","splashBg2","splashText","splashAccent",
+      "splashAlign","splashLoading","splashAnimation","splashMs","splashTitle","splashTagline"
+    ].forEach(function(id){add(id,$(id).value);});
+
+    [
+      "splashEnabled","splashShowLogo","splashShowTitle","splashShowTagline","splashShowLoading",
+      "backNavigation","exitConfirm","internetCheck","fileUpload","fileDownload","pullToRefresh",
+      "externalLinks","zoomEnabled","keepScreenOn","preventScreenshots","cameraPermission",
+      "microphonePermission","locationPermission"
+    ].forEach(function(id){add(id,$(id).checked);});
+
+    if($("icon").files&&$("icon").files[0]){
+      setProgress(4,"Preparing app icon...");
+      fd.append("icon",await imageBlob($("icon").files[0],"icon"),"icon.png");
+    }
+    if($("splash").files&&$("splash").files[0]){
+      setProgress(6,"Preparing splash logo...");
+      fd.append("splash",await imageBlob($("splash").files[0],"splash"),"splash.png");
+    }
+
+    setProgress(8,"Sending build request...");
+    var response=await fetch(API+"/build",{method:"POST",body:fd});
+    var data=await getJson(response);
+    if(!data.jobId)throw new Error("Worker did not return a job ID.");
+
+    setProgress(12,"GitHub Actions build started...");
+    await poll(data.jobId);
+  }catch(error){
+    showError(error&&error.message?error.message:"Something went wrong.");
+  }
+};
+
+})();
+]]></script>
+</body>
+</html>
