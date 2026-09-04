@@ -6,7 +6,7 @@ export default {
     if (request.method === "OPTIONS") return new Response("", { headers: cors() });
     try {
       if (url.pathname === "/" || url.pathname === "/health") {
-        return json({ ok: true, service: "Web2APK GitHub Actions Gateway", version: "2.0" });
+        return json({ ok: true, service: "Web2APK GitHub Actions Gateway", version: "3.0" });
       }
       if (url.pathname === "/build" && request.method === "POST") return await createBuild(request, env);
       if (url.pathname.startsWith("/status/") && request.method === "GET") {
@@ -125,12 +125,36 @@ async function createBuild(request, env) {
     package_name: b.packageName || "com.web2apk.app",
     version_name: b.versionName || "1.0",
     version_code: String(b.versionCode || 1),
-    orientation: b.orientation === "landscape" ? "landscape" : "portrait",
+    orientation: ["portrait","landscape","sensor"].includes(b.orientation) ? b.orientation : "portrait",
+    splash_enabled: String(b.splashEnabled !== false && b.splashEnabled !== "false"),
     splash_ms: String(b.splashMs || 2000),
+    splash_bg_type: b.splashBgType === "gradient" ? "gradient" : "solid",
+    splash_bg: b.splashBg || "#0B1020",
+    splash_bg2: b.splashBg2 || "#242B55",
+    splash_text: b.splashText || "#FFFFFF",
+    splash_accent: b.splashAccent || "#7C72FF",
+    splash_align: ["center","top","bottom"].includes(b.splashAlign) ? b.splashAlign : "center",
+    splash_loading: ["bar","spinner","dots","none"].includes(b.splashLoading) ? b.splashLoading : "bar",
+    splash_animation: ["fade","zoom","slideup","none"].includes(b.splashAnimation) ? b.splashAnimation : "fade",
+    splash_title: b.splashTitle || b.appName || "My Website App",
+    splash_tagline: b.splashTagline || "",
+    splash_show_logo: String(b.splashShowLogo !== false && b.splashShowLogo !== "false"),
+    splash_show_title: String(b.splashShowTitle !== false && b.splashShowTitle !== "false"),
+    splash_show_tagline: String(b.splashShowTagline === true || b.splashShowTagline === "true"),
+    splash_show_loading: String(b.splashShowLoading !== false && b.splashShowLoading !== "false"),
+    back_navigation: String(b.backNavigation !== false && b.backNavigation !== "false"),
     exit_confirm: String(b.exitConfirm !== false && b.exitConfirm !== "false"),
     internet_check: String(b.internetCheck !== false && b.internetCheck !== "false"),
     file_upload: String(b.fileUpload !== false && b.fileUpload !== "false"),
     file_download: String(b.fileDownload !== false && b.fileDownload !== "false"),
+    pull_to_refresh: String(b.pullToRefresh === true || b.pullToRefresh === "true"),
+    external_links: String(b.externalLinks !== false && b.externalLinks !== "false"),
+    zoom_enabled: String(b.zoomEnabled === true || b.zoomEnabled === "true"),
+    keep_screen_on: String(b.keepScreenOn === true || b.keepScreenOn === "true"),
+    prevent_screenshots: String(b.preventScreenshots === true || b.preventScreenshots === "true"),
+    camera_permission: String(b.cameraPermission === true || b.cameraPermission === "true"),
+    microphone_permission: String(b.microphonePermission === true || b.microphonePermission === "true"),
+    location_permission: String(b.locationPermission === true || b.locationPermission === "true"),
     icon_url: b.iconUrl || "",
     splash_url: b.splashUrl || "",
     icon_path: iconPath,

@@ -19,6 +19,8 @@ function safeAppName(value) {
   return String(value || "Web App").replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0,40) || "Web App";
 }
 function xmlEscape(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function color(value, fallback){return /^#[0-9a-fA-F]{6}$/.test(String(value||""))?String(value):fallback;}
+function bool(v, d=false){return v===true || v==="true" ? true : v===false || v==="false" ? false : d;}
 function javaEscape(s){return String(s).replace(/\\/g,"\\\\").replace(/"/g,'\\"').replace(/\r/g,"\\r").replace(/\n/g,"\\n");}
 function isHttp(u){return /^https?:\/\//i.test(u||"");}
 function absoluteUrl(base, raw){try{return new URL(raw,base).href}catch{return null}}
@@ -81,15 +83,46 @@ async function main(){
   await fs.ensureDir(newJavaDir);
   let java=await fs.readFile(oldJava,"utf8"); await fs.remove(path.dirname(oldJava));
   java=java.replaceAll("com.example.web2apk",pkg).replaceAll("WEB2APK_APP_NAME",javaEscape(appName)).replaceAll("WEB2APK_WEBSITE_URL",javaEscape(input.url))
-    .replaceAll("WEB2APK_ORIENTATION",input.orientation==="landscape"?"landscape":"portrait")
+    .replaceAll("WEB2APK_ORIENTATION",["portrait","landscape","sensor"].includes(input.orientation)?input.orientation:"portrait")
+    .replaceAll("WEB2APK_SPLASH_ENABLED",String(bool(input.splashEnabled,true)))
     .replaceAll("WEB2APK_SPLASH_MS",String(Math.max(0,Math.min(10000,Number(input.splashMs)||2000))))
-    .replaceAll("WEB2APK_INTERNET_CHECK",String(input.internetCheck!=="false"))
-    .replaceAll("WEB2APK_FILE_UPLOAD",String(input.fileUpload!=="false"))
-    .replaceAll("WEB2APK_FILE_DOWNLOAD",String(input.fileDownload!=="false"))
-    .replaceAll("WEB2APK_EXIT_CONFIRM",String(input.exitConfirm!=="false"));
+    .replaceAll("WEB2APK_SPLASH_BG_TYPE",input.splashBgType==="gradient"?"gradient":"solid")
+    .replaceAll("WEB2APK_SPLASH_BG",color(input.splashBg,"#0B1020"))
+    .replaceAll("WEB2APK_SPLASH_BG2",color(input.splashBg2,"#242B55"))
+    .replaceAll("WEB2APK_SPLASH_TEXT",color(input.splashText,"#FFFFFF"))
+    .replaceAll("WEB2APK_SPLASH_ACCENT",color(input.splashAccent,"#7C72FF"))
+    .replaceAll("WEB2APK_SPLASH_ALIGN",["center","top","bottom"].includes(input.splashAlign)?input.splashAlign:"center")
+    .replaceAll("WEB2APK_SPLASH_LOADING",["bar","spinner","dots","none"].includes(input.splashLoading)?input.splashLoading:"bar")
+    .replaceAll("WEB2APK_SPLASH_ANIMATION",["fade","zoom","slideup","none"].includes(input.splashAnimation)?input.splashAnimation:"fade")
+    .replaceAll("WEB2APK_SPLASH_TITLE",javaEscape(input.splashTitle||appName))
+    .replaceAll("WEB2APK_SPLASH_TAGLINE",javaEscape(input.splashTagline||""))
+    .replaceAll("WEB2APK_SPLASH_SHOW_LOGO",String(bool(input.splashShowLogo,true)))
+    .replaceAll("WEB2APK_SPLASH_SHOW_TITLE",String(bool(input.splashShowTitle,true)))
+    .replaceAll("WEB2APK_SPLASH_SHOW_TAGLINE",String(bool(input.splashShowTagline,false)))
+    .replaceAll("WEB2APK_SPLASH_SHOW_LOADING",String(bool(input.splashShowLoading,true)))
+    .replaceAll("WEB2APK_BACK_NAVIGATION",String(bool(input.backNavigation,true)))
+    .replaceAll("WEB2APK_INTERNET_CHECK",String(bool(input.internetCheck,true)))
+    .replaceAll("WEB2APK_FILE_UPLOAD",String(bool(input.fileUpload,true)))
+    .replaceAll("WEB2APK_FILE_DOWNLOAD",String(bool(input.fileDownload,true)))
+    .replaceAll("WEB2APK_PULL_TO_REFRESH",String(bool(input.pullToRefresh,false)))
+    .replaceAll("WEB2APK_EXTERNAL_LINKS",String(bool(input.externalLinks,true)))
+    .replaceAll("WEB2APK_ZOOM_ENABLED",String(bool(input.zoomEnabled,false)))
+    .replaceAll("WEB2APK_KEEP_SCREEN_ON",String(bool(input.keepScreenOn,false)))
+    .replaceAll("WEB2APK_PREVENT_SCREENSHOTS",String(bool(input.preventScreenshots,false)))
+    .replaceAll("WEB2APK_CAMERA_PERMISSION",String(bool(input.cameraPermission,false)))
+    .replaceAll("WEB2APK_MICROPHONE_PERMISSION",String(bool(input.microphonePermission,false)))
+    .replaceAll("WEB2APK_LOCATION_PERMISSION",String(bool(input.locationPermission,false)))
+    .replaceAll("WEB2APK_EXIT_CONFIRM",String(bool(input.exitConfirm,true)));
   await fs.writeFile(path.join(newJavaDir,"MainActivity.java"),java);
   const mf=path.join(project,"app/src/main/AndroidManifest.xml");
-  let manifest=await fs.readFile(mf,"utf8"); manifest=manifest.replaceAll("com.example.web2apk",pkg).replace("android:screenOrientation=\"portrait\"",`android:screenOrientation="${input.orientation==="landscape"?"landscape":"portrait"}"`);
+  let manifest=await fs.readFile(mf,"utf8");
+  const orient=["portrait","landscape","sensor"].includes(input.orientation)?input.orientation:"portrait";
+  manifest=manifest.replaceAll("com.example.web2apk",pkg).replace("android:screenOrientation=\"portrait\"",`android:screenOrientation="${orient}"`);
+  const perms=[];
+  if(bool(input.cameraPermission,false)) perms.push('<uses-permission android:name="android.permission.CAMERA"/>');
+  if(bool(input.microphonePermission,false)) perms.push('<uses-permission android:name="android.permission.RECORD_AUDIO"/>');
+  if(bool(input.locationPermission,false)) perms.push('<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>');
+  manifest=manifest.replace('</manifest>', perms.join('')+'\n</manifest>');
   await fs.writeFile(mf,manifest);
   const gb=path.join(project,"app/build.gradle");
   let gradle=await fs.readFile(gb,"utf8"); gradle=gradle.replace(/namespace "com\.example\.web2apk"/,`namespace "${pkg}"`).replace(/applicationId "com\.example\.web2apk"/,`applicationId "${pkg}"`).replace(/versionName "1\.0"/,`versionName "${String(input.versionName||"1.0").replace(/"/g,"")}"`).replace(/versionCode 1/,`versionCode ${Math.max(1,parseInt(input.versionCode||"1",10)||1)}`);
