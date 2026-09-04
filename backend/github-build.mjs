@@ -87,8 +87,12 @@ async function main(){
     .replaceAll("WEB2APK_SPLASH_ENABLED",String(bool(input.splashEnabled,true)))
     .replaceAll("WEB2APK_SPLASH_MS",String(Math.max(0,Math.min(10000,Number(input.splashMs)||2000))))
     .replaceAll("WEB2APK_SPLASH_BG_TYPE",input.splashBgType==="gradient"?"gradient":"solid")
-    .replaceAll("WEB2APK_SPLASH_BG",color(input.splashBg,"#0B1020"))
+    // Replace BG2 before BG because WEB2APK_SPLASH_BG is a substring of
+    // WEB2APK_SPLASH_BG2. Reversing these lines prevents values such as
+    // #0B10202 from being generated, which would crash Color.parseColor()
+    // immediately when the APK starts.
     .replaceAll("WEB2APK_SPLASH_BG2",color(input.splashBg2,"#242B55"))
+    .replaceAll("WEB2APK_SPLASH_BG",color(input.splashBg,"#0B1020"))
     .replaceAll("WEB2APK_SPLASH_TEXT",color(input.splashText,"#FFFFFF"))
     .replaceAll("WEB2APK_SPLASH_ACCENT",color(input.splashAccent,"#7C72FF"))
     .replaceAll("WEB2APK_SPLASH_ALIGN",["center","top","bottom"].includes(input.splashAlign)?input.splashAlign:"center")
