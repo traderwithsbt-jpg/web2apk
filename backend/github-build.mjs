@@ -59,11 +59,17 @@ async function mirrorWebsite(inputUrl,outDir){
 }
 async function makeIcon(src,resDir){
   const dirs=["mipmap-mdpi","mipmap-hdpi","mipmap-xhdpi","mipmap-xxhdpi","mipmap-xxxhdpi"],sizes=[48,72,96,144,192];
-  for(let i=0;i<dirs.length;i++){const d=path.join(resDir,dirs[i]);await fs.ensureDir(d);await sharp(src).resize(sizes[i],sizes[i],{fit:"cover"}).png().toFile(path.join(d,"ic_launcher.png"));}
+  for(let i=0;i<dirs.length;i++){
+    const d=path.join(resDir,dirs[i]);
+    await fs.ensureDir(d);
+    await sharp(src).resize(sizes[i],sizes[i],{fit:"contain",background:{r:0,g:0,b:0,alpha:0}}).png().toFile(path.join(d,"ic_launcher.png"));
+  }
 }
 async function makeSplash(src,resDir){
   const d=path.join(resDir,"drawable-nodpi");await fs.ensureDir(d);
-  await sharp(src).resize(1080,1920,{fit:"inside",withoutEnlargement:true}).png().toFile(path.join(d,"splash_logo.png"));
+  // Keep the uploaded splash artwork large and transparent-friendly so it is
+  // clearly visible inside the native splash screen on different phone sizes.
+  await sharp(src).resize(1080,1080,{fit:"contain",background:{r:0,g:0,b:0,alpha:0},withoutEnlargement:false}).png().toFile(path.join(d,"splash_logo.png"));
 }
 async function downloadFile(url,dest){
   if(!isHttp(url)) throw new Error("Invalid image URL");
@@ -134,21 +140,29 @@ async function main(){
   await fs.writeFile(path.join(project,"app/src/main/res/values/strings.xml"),`<resources><string name="app_name">${xmlEscape(appName)}</string></resources>`);
   // Prefer the image uploaded by Blogger through the Worker. Public HTTPS URLs
   // remain supported as a fallback.
+  let customIcon = false;
+  let customSplash = false;
+  let iconSource = null;
   if(input.iconPath){
     const p=path.resolve(process.cwd(),input.iconPath);
     if(!p.startsWith(path.resolve(process.cwd()) + path.sep)) throw new Error("Invalid icon path");
-    if(await fs.pathExists(p)) await makeIcon(p,path.join(project,"app/src/main/res"));
+    if(await fs.pathExists(p)){ await makeIcon(p,path.join(project,"app/src/main/res")); customIcon=true; iconSource=p; }
   } else if(input.iconUrl){
     const p=path.join(ROOT,input.jobId,"icon"); await fs.ensureDir(path.dirname(p));
-    await downloadFile(input.iconUrl,p); await makeIcon(p,path.join(project,"app/src/main/res"));
+    await downloadFile(input.iconUrl,p); await makeIcon(p,path.join(project,"app/src/main/res")); customIcon=true; iconSource=p;
   }
   if(input.splashPath){
     const p=path.resolve(process.cwd(),input.splashPath);
     if(!p.startsWith(path.resolve(process.cwd()) + path.sep)) throw new Error("Invalid splash path");
-    if(await fs.pathExists(p)) await makeSplash(p,path.join(project,"app/src/main/res"));
+    if(await fs.pathExists(p)){ await makeSplash(p,path.join(project,"app/src/main/res")); customSplash=true; }
   } else if(input.splashUrl){
     const p=path.join(ROOT,input.jobId,"splash"); await fs.ensureDir(path.dirname(p));
-    await downloadFile(input.splashUrl,p); await makeSplash(p,path.join(project,"app/src/main/res"));
+    await downloadFile(input.splashUrl,p); await makeSplash(p,path.join(project,"app/src/main/res")); customSplash=true;
+  }
+  // If the user supplied only an app icon, use that icon as the splash artwork
+  // too. This guarantees that the splash never appears blank.
+  if(customIcon && !customSplash && iconSource && await fs.pathExists(iconSource)){
+    await makeSplash(iconSource,path.join(project,"app/src/main/res"));
   }
   // The packaged app loads the live website URL. This is much more reliable for
   // modern sites than copying only a subset of their assets into the APK.

@@ -94,40 +94,64 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void showSplash() {
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
+        FrameLayout splashRoot = new FrameLayout(this);
         if ("gradient".equals(splashBgType)) {
             GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{splashBg, splashBg2});
-            box.setBackground(bg);
+            splashRoot.setBackground(bg);
         } else {
-            box.setBackgroundColor(splashBg);
+            splashRoot.setBackgroundColor(splashBg);
         }
-        applySystemBarInsets(box);
+        applySystemBarInsets(splashRoot);
 
-        if ("top".equals(splashAlign)) box.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        if ("bottom".equals(splashAlign)) box.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER_HORIZONTAL);
+        int pad = (int)(getResources().getDisplayMetrics().density * 22);
+        content.setPadding(pad, pad, pad, pad);
+
+        if ("top".equals(splashAlign)) {
+            FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+            cp.topMargin = (int)(getResources().getDisplayMetrics().density * 48);
+            splashRoot.addView(content, cp);
+        } else if ("bottom".equals(splashAlign)) {
+            FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+            cp.bottomMargin = (int)(getResources().getDisplayMetrics().density * 42);
+            splashRoot.addView(content, cp);
+        } else {
+            splashRoot.addView(content, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
+        }
 
         if (splashShowLogo) {
+            FrameLayout logoCard = new FrameLayout(this);
+            GradientDrawable cardBg = new GradientDrawable();
+            cardBg.setColor(Color.argb(34, 255, 255, 255));
+            cardBg.setCornerRadius(getResources().getDisplayMetrics().density * 28);
+            logoCard.setBackground(cardBg);
+            logoCard.setPadding((int)(getResources().getDisplayMetrics().density * 18),
+                    (int)(getResources().getDisplayMetrics().density * 18),
+                    (int)(getResources().getDisplayMetrics().density * 18),
+                    (int)(getResources().getDisplayMetrics().density * 18));
             ImageView logo = new ImageView(this);
             logo.setImageResource(R.drawable.splash_logo);
             logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            int s = (int)(getResources().getDisplayMetrics().density * 120);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
-            lp.bottomMargin = 10;
-            box.addView(logo, lp);
-            animateView(logo);
+            logoCard.addView(logo, new FrameLayout.LayoutParams(-1, -1, Gravity.CENTER));
+            int size = (int)(getResources().getDisplayMetrics().density * 190);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.bottomMargin = (int)(getResources().getDisplayMetrics().density * 18);
+            content.addView(logoCard, lp);
+            animateView(logoCard);
         }
 
         if (splashShowTitle) {
             TextView title = new TextView(this);
             title.setText(splashTitle);
             title.setTextColor(splashText);
-            title.setTextSize(24);
+            title.setTextSize(27);
             title.setGravity(Gravity.CENTER);
             title.setTypeface(null, android.graphics.Typeface.BOLD);
-            title.setPadding(20, 10, 20, 6);
-            box.addView(title, new LinearLayout.LayoutParams(-1, -2));
+            title.setLetterSpacing(.01f);
+            title.setPadding(16, 0, 16, 5);
+            content.addView(title, new LinearLayout.LayoutParams(-1, -2));
             animateView(title);
         }
 
@@ -138,32 +162,48 @@ public class MainActivity extends AppCompatActivity {
             tag.setAlpha(.78f);
             tag.setTextSize(14);
             tag.setGravity(Gravity.CENTER);
-            tag.setPadding(20, 0, 20, 18);
-            box.addView(tag, new LinearLayout.LayoutParams(-1, -2));
+            tag.setPadding(18, 2, 18, 18);
+            content.addView(tag, new LinearLayout.LayoutParams(-1, -2));
             animateView(tag);
         }
 
         if (splashShowLoading && !"none".equals(splashStyle)) {
             if ("dots".equals(splashStyle)) {
                 TextView dots = new TextView(this);
-                dots.setText("•••");
+                dots.setText("•  •  •");
                 dots.setTextColor(splashAccent);
-                dots.setTextSize(24);
+                dots.setTextSize(18);
                 dots.setGravity(Gravity.CENTER);
-                box.addView(dots, new LinearLayout.LayoutParams(-1, 42));
+                content.addView(dots, new LinearLayout.LayoutParams(-1, 42));
                 animateView(dots);
+            } else if ("spinner".equals(splashStyle)) {
+                ProgressBar spinner = new ProgressBar(this);
+                spinner.setIndeterminate(true);
+                content.addView(spinner, new LinearLayout.LayoutParams(44, 44));
+                animateView(spinner);
             } else {
-                ProgressBar bar = new ProgressBar(this, null, "spinner".equals(splashStyle) ? android.R.attr.progressBarStyle : android.R.attr.progressBarStyleHorizontal);
-                if (bar.isIndeterminate() && "spinner".equals(splashStyle)) {
-                    box.addView(bar, new LinearLayout.LayoutParams(48, 48));
-                } else {
-                    bar.setIndeterminate(false); bar.setMax(100); bar.setProgress(100);
-                    box.addView(bar, new LinearLayout.LayoutParams((int)(getResources().getDisplayMetrics().density*220), 10));
-                }
+                ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+                bar.setIndeterminate(true);
+                android.graphics.drawable.GradientDrawable track = new android.graphics.drawable.GradientDrawable();
+                track.setColor(Color.argb(55, 255, 255, 255));
+                track.setCornerRadius(20);
+                android.graphics.drawable.GradientDrawable progress = new android.graphics.drawable.GradientDrawable();
+                progress.setColor(splashAccent);
+                progress.setCornerRadius(20);
+                android.graphics.drawable.ClipDrawable clipped = new android.graphics.drawable.ClipDrawable(progress, Gravity.LEFT, 1);
+                bar.setProgressDrawable(new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{track, clipped}));
+                bar.setIndeterminate(false);
+                bar.setMax(100);
+                bar.setProgress(72);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams((int)(getResources().getDisplayMetrics().density * 220), 9);
+                lp.topMargin = 8;
+                content.addView(bar, lp);
                 animateView(bar);
             }
         }
-        root.removeAllViews(); root.addView(box, new FrameLayout.LayoutParams(-1, -1));
+
+        root.removeAllViews();
+        root.addView(splashRoot, new FrameLayout.LayoutParams(-1, -1));
     }
 
     void showWeb() {
