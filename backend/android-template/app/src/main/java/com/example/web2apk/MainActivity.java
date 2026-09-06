@@ -243,7 +243,41 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (fileDownload) web.setDownloadListener((url,userAgent,contentDisposition,mime,contentLength) -> {
-            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch(Exception ignored) {}
+            try {
+                if (url == null || url.trim().isEmpty()) return;
+                Uri uri = Uri.parse(url);
+                if (!"http".equalsIgnoreCase(uri.getScheme()) && !"https".equalsIgnoreCase(uri.getScheme())) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch(Exception ignored) {}
+                    return;
+                }
+
+                android.app.DownloadManager dm = (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                if (dm == null) return;
+
+                android.app.DownloadManager.Request req = new android.app.DownloadManager.Request(uri);
+                req.setTitle(getString(com.example.web2apk.R.string.app_name));
+                req.setDescription("Downloading file…");
+                req.setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setAllowedOverMetered(true);
+                req.setAllowedOverRoaming(true);
+                if (mime != null && !mime.trim().isEmpty()) req.setMimeType(mime);
+
+                String cookie = android.webkit.CookieManager.getInstance().getCookie(url);
+                if (cookie != null && !cookie.isEmpty()) req.addRequestHeader("Cookie", cookie);
+                if (userAgent != null && !userAgent.isEmpty()) req.addRequestHeader("User-Agent", userAgent);
+                req.addRequestHeader("Accept", "*/*");
+
+                String fileName = null;
+                try {
+                    fileName = android.webkit.URLUtil.guessFileName(url, contentDisposition, mime);
+                } catch(Exception ignored) {}
+                if (fileName == null || fileName.trim().isEmpty()) fileName = "download";
+                req.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                dm.enqueue(req);
+                android.widget.Toast.makeText(this, "Download started — check Downloads", android.widget.Toast.LENGTH_SHORT).show();
+            } catch(Exception e) {
+                android.widget.Toast.makeText(this, "Download failed: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+            }
         });
 
         if (fileUpload || cameraPermission || microphonePermission || locationPermission) web.setWebChromeClient(new WebChromeClient() {
