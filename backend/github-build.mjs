@@ -60,10 +60,17 @@ async function mirrorWebsite(inputUrl,outDir){
 async function makeIcon(src,resDir){
   const dirs=["mipmap-mdpi","mipmap-hdpi","mipmap-xhdpi","mipmap-xxhdpi","mipmap-xxxhdpi"],sizes=[48,72,96,144,192];
   for(let i=0;i<dirs.length;i++){
-    const d=path.join(resDir,dirs[i]);
-    await fs.ensureDir(d);
-    await sharp(src).resize(sizes[i],sizes[i],{fit:"contain",background:{r:0,g:0,b:0,alpha:0}}).png().toFile(path.join(d,"ic_launcher.png"));
+    const d=path.join(resDir,dirs[i]); await fs.ensureDir(d);
+    await sharp(src).resize(sizes[i],sizes[i],{fit:"contain",background:{r:255,g:255,b:255,alpha:0}}).png().toFile(path.join(d,"ic_launcher.png"));
   }
+  // Android 8+ adaptive launcher icon. Keep the same custom artwork in the foreground
+  // so launchers on newer phones do not fall back to the template icon.
+  const any=path.join(resDir,"mipmap-anydpi-v26"); await fs.ensureDir(any);
+  const drawable=path.join(resDir,"drawable"); await fs.ensureDir(drawable);
+  const fg=path.join(drawable,"web2apk_icon_foreground.png");
+  await sharp(src).resize(300,300,{fit:"contain",background:{r:255,g:255,b:255,alpha:0}}).extend({top:66,bottom:66,left:66,right:66,background:{r:255,g:255,b:255,alpha:0}}).png().toFile(fg);
+  await fs.writeFile(path.join(drawable,"web2apk_icon_background.xml"),`<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#FFFFFF"/></shape>`);
+  await fs.writeFile(path.join(any,"ic_launcher.xml"),`<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@drawable/web2apk_icon_background"/><foreground android:drawable="@drawable/web2apk_icon_foreground"/></adaptive-icon>`);
 }
 async function makeSplash(src,resDir){
   const d=path.join(resDir,"drawable-nodpi");await fs.ensureDir(d);
@@ -83,7 +90,6 @@ async function main(){
   await fs.remove(project); await copyRecursive(TEMPLATE,project);
   // Use PNG launcher assets on every Android version so a custom icon is never
   // hidden by the template adaptive-icon resource.
-  await fs.remove(path.join(project,"app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"));
   const appName=safeAppName(input.appName),pkg=safePackage(input.packageName),pkgPath=path.join(...pkg.split("."));
   const srcRoot=path.join(project,"app/src/main/java"),oldJava=path.join(srcRoot,"com/example/web2apk/MainActivity.java"),newJavaDir=path.join(srcRoot,pkgPath);
   await fs.ensureDir(newJavaDir);

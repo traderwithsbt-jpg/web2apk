@@ -5,6 +5,12 @@ import android.os.*;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.util.Base64;
+import android.webkit.JavascriptInterface;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URLDecoder;
 import android.net.*;
 import android.view.*;
 import android.webkit.*;
@@ -52,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     boolean splashShowLoading = WEB2APK_SPLASH_SHOW_LOADING;
     ValueCallback<Uri[]> fileCallback;
     SwipeRefreshLayout refreshContainer;
+    ByteArrayOutputStream bridgeDownloadBuffer;
+    String bridgeDownloadName;
+    String bridgeDownloadMime;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -236,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
             @Override public boolean shouldOverrideUrlLoading(WebView v, String url) { return false; }
-            @Override public void onPageFinished(WebView v, String u) { if (refreshContainer != null) refreshContainer.setRefreshing(false); }
+            @Override public void onPageFinished(WebView v, String u) { if (refreshContainer != null) refreshContainer.setRefreshing(false); injectDownloadBridge(); }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
                 if (internetCheck && r.isForMainFrame() && !isOnline()) showOffline();
             }
@@ -279,6 +288,34 @@ public class MainActivity extends AppCompatActivity {
                 android.widget.Toast.makeText(this, "Download failed: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
             }
         });
+
+        if (fileDownload) {
+            web.addJavascriptInterface(new Object() {
+                @JavascriptInterface public void startDownload(String name, String mime) {
+                    bridgeDownloadBuffer = new ByteArrayOutputStream();
+                    bridgeDownloadName = sanitizeFileName(name);
+                    bridgeDownloadMime = (mime == null || mime.isEmpty()) ? "application/octet-stream" : mime;
+                }
+                @JavascriptInterface public void appendDownload(String chunk) {
+                    try {
+                        if (bridgeDownloadBuffer == null || chunk == null) return;
+                        byte[] bytes = Base64.decode(chunk, Base64.DEFAULT);
+                        bridgeDownloadBuffer.write(bytes);
+                    } catch (Exception ignored) {}
+                }
+                @JavascriptInterface public void finishDownload() {
+                    if (bridgeDownloadBuffer == null) return;
+                    try {
+                        saveBridgeDownload(bridgeDownloadBuffer.toByteArray(), bridgeDownloadName, bridgeDownloadMime);
+                    } finally {
+                        bridgeDownloadBuffer = null; bridgeDownloadName = null; bridgeDownloadMime = null;
+                    }
+                }
+                @JavascriptInterface public void cancelDownload() {
+                    bridgeDownloadBuffer = null; bridgeDownloadName = null; bridgeDownloadMime = null;
+                }
+            }, "AndroidDownload");
+        }
 
         if (fileUpload || cameraPermission || microphonePermission || locationPermission) web.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(final PermissionRequest request) {
@@ -328,11 +365,67 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    String sanitizeFileName(String name) {
+        if (name == null || name.trim().isEmpty()) name = "download";
+        name = name.replaceAll("[\\/:*?\"<>|]", "_").trim();
+        if (name.length() > 180) name = name.substring(0, 180);
+        return name.isEmpty() ? "download" : name;
+    }
+
+    void saveBridgeDownload(byte[] data, String name, String mime) {
+        try {
+            name = sanitizeFileName(name);
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name);
+                values.put(android.provider.MediaStore.Downloads.MIME_TYPE, mime);
+                values.put(android.provider.MediaStore.Downloads.IS_PENDING, 1);
+                Uri collection = android.provider.MediaStore.Downloads.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                Uri item = getContentResolver().insert(collection, values);
+                if (item == null) throw new Exception("Could not create Downloads file");
+                try (java.io.OutputStream out = getContentResolver().openOutputStream(item)) {
+                    if (out == null) throw new Exception("Could not open Downloads file");
+                    out.write(data);
+                }
+                values.clear(); values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0);
+                getContentResolver().update(item, values, null, null);
+            } else {
+                if (checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"}, 303);
+                    Toast.makeText(this, "Allow storage permission, then download again", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                File dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);
+                if (!dir.exists()) dir.mkdirs();
+                File outFile = new File(dir, name);
+                try (FileOutputStream out = new FileOutputStream(outFile)) { out.write(data); }
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(outFile)));
+            }
+            Toast.makeText(this, "File saved to Downloads", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    void injectDownloadBridge() {
+        if (!fileDownload || web == null) return;
+        String js = "javascript:(function(){if(window.__web2apk_dl)return;window.__web2apk_dl=1;" +
+            "function send(b,n){n=n||'download';var m=b.type||'application/octet-stream',z=524288,i=0;" +
+            "try{AndroidDownload.startDownload(n,m)}catch(e){return}" +
+            "function nx(){if(i>=b.size){try{AndroidDownload.finishDownload()}catch(e){}return}" +
+            "var r=new FileReader(),e=Math.min(i+z,b.size);r.onload=function(){try{AndroidDownload.appendDownload(r.result.split(',')[1]);i=e;nx()}catch(x){try{AndroidDownload.cancelDownload()}catch(q){}}};r.onerror=function(){try{AndroidDownload.cancelDownload()}catch(q){}};r.readAsDataURL(b.slice(i,e))}nx()}" +
+            "document.addEventListener('click',function(ev){var a=ev.target.closest?ev.target.closest('a'):null;if(!a)return;var h=a.href||a.getAttribute('href')||'',n=a.getAttribute('download')||'download';" +
+            "if(h.indexOf('blob:')===0||h.indexOf('data:')===0){ev.preventDefault();ev.stopPropagation();fetch(h).then(function(r){return r.blob()}).then(function(b){send(b,n)}).catch(function(){})}},true);" +
+            "})();";
+        web.evaluateJavascript(js, null);
+    }
+
     void requestOptionalPermissions() {
         ArrayList<String> p = new ArrayList<>();
         if (cameraPermission && Build.VERSION.SDK_INT >= 23) p.add("android.permission.CAMERA");
         if (microphonePermission && Build.VERSION.SDK_INT >= 23) p.add("android.permission.RECORD_AUDIO");
         if (locationPermission && Build.VERSION.SDK_INT >= 23) p.add("android.permission.ACCESS_FINE_LOCATION");
+        if (fileDownload && Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT <= 28 && checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != android.content.pm.PackageManager.PERMISSION_GRANTED) p.add("android.permission.WRITE_EXTERNAL_STORAGE");
         if (!p.isEmpty() && Build.VERSION.SDK_INT >= 23) requestPermissions(p.toArray(new String[0]), 202);
     }
 
